@@ -1,105 +1,91 @@
-use starknet::ContractAddress;
-
-#[starknet::interface]
-pub trait IYourContract<TContractState> {
-    fn gretting(self: @TContractState) -> ByteArray;
-    fn set_gretting(ref self: TContractState, new_greeting: ByteArray, amount_eth: u256);
-    fn withdraw(ref self: TContractState);
-    fn premium(self: @TContractState) -> bool;
-}
+// SPDX-License-Identifier: MIT
+// Compatible with OpenZeppelin Contracts for Cairo ^0.13.0
 
 #[starknet::contract]
-mod YourContract {
+mod DevDock {
     use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::token::erc20::interface::{IERC20CamelDispatcher, IERC20CamelDispatcherTrait};
-    use starknet::{get_caller_address, get_contract_address};
-    use super::{ContractAddress, IYourContract};
+    use openzeppelin::token::erc20::ERC20Component;
+    use openzeppelin::token::erc20::ERC20HooksEmptyImpl;
+    use starknet::ContractAddress;
+    use starknet::get_contract_address;
+    use starknet::get_caller_address;
 
+    component!(path: ERC20Component, storage: erc20, event: ERC20Event);
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
     #[abi(embed_v0)]
-    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl ERC20MixinImpl = ERC20Component::ERC20MixinImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
+
+    impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
-    const ETH_CONTRACT_ADDRESS: felt252 =
-        0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7;
+    #[storage]
+    struct Storage {
+        #[substorage(v0)]
+        erc20: ERC20Component::Storage,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+        balances: LegacyMap<ContractAddress, u256>,
+        supply: u256
+    }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
         #[flat]
+        ERC20Event: ERC20Component::Event,
+        #[flat]
         OwnableEvent: OwnableComponent::Event,
-        GreetingChanged: GreetingChanged
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct GreetingChanged {
-        #[key]
-        greeting_setter: ContractAddress,
-        #[key]
-        new_greeting: ByteArray,
-        premium: bool,
-        value: u256,
-    }
-
-
-    #[storage]
-    struct Storage {
-        eth_token: IERC20CamelDispatcher,
-        greeting: ByteArray,
-        premium: bool,
-        total_counter: u256,
-        user_gretting_counter: LegacyMap<ContractAddress, u256>,
-        #[substorage(v0)]
-        ownable: OwnableComponent::Storage,
+        
     }
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress) {
-        let eth_contract_address = ETH_CONTRACT_ADDRESS.try_into().unwrap();
-        self.eth_token.write(IERC20CamelDispatcher { contract_address: eth_contract_address });
-        self.greeting.write("Building Unstoppable Apps!!!");
-        self.ownable.initializer(owner);
+        self.erc20.initializer("STARK", "STRK");
+        // self.ownable.initializer(owner);
+        self.ownable.initializer(get_caller_address())
+        self.mint(get_contract_address(),1000000000000000000000);//1*10^21
+        self.supply = 1000000000000000000000;//1*10^21
     }
 
-    #[abi(embed_v0)]
-    impl YourContractImpl of IYourContract<ContractState> {
-        fn gretting(self: @ContractState) -> ByteArray {
-            self.greeting.read()
-        }
-        fn set_gretting(ref self: ContractState, new_greeting: ByteArray, amount_eth: u256) {
-            self.greeting.write(new_greeting);
-            self.total_counter.write(self.total_counter.read() + 1);
-            let user_counter = self.user_gretting_counter.read(get_caller_address());
-            self.user_gretting_counter.write(get_caller_address(), user_counter + 1);
-
-            if amount_eth > 0 {
-                // call `approve` on ETH contract before transfer amount_eth
-                self
-                    .eth_token
-                    .read()
-                    .transferFrom(get_caller_address(), get_contract_address(), amount_eth);
-                self.premium.write(true);
-            } else {
-                self.premium.write(false);
-            }
-            self
-                .emit(
-                    GreetingChanged {
-                        greeting_setter: get_caller_address(),
-                        new_greeting: self.greeting.read(),
-                        premium: true,
-                        value: 100
-                    }
-                );
-        }
-        fn withdraw(ref self: ContractState) {
+    #[generate_trait]
+    #[abi(per_item)]
+    impl ExternalImpl of ExternalTrait {
+        fn mint(ref self: ContractState, recipient: ContractAddress, amount: u256) {
             self.ownable.assert_only_owner();
-            let balance = self.eth_token.read().balanceOf(get_contract_address());
-            self.eth_token.read().transfer(self.ownable.owner(), balance);
+            self.erc20._mint(recipient, amount);
         }
-        fn premium(self: @ContractState) -> bool {
-            self.premium.read()
+        # [external(v0)]
+        fn receive(ref self: ContractState,amount:u256){
+            let caller =get_caller_address();
+            let _balance = self.balances.read(caller);
+           
+            self.erc20._transfer_from(ref self,get_contract_address() , caller, amount);
+            self.balances.write(caller,_balance - amount);
+        }
+        fn pow<T, +Sub<T>, +Mul<T>, +Div<T>, +Rem<T>, +PartialEq<T>, +Into<u8, T>, +Drop<T>, +Copy<T>>(
+            base: T, exp: T
+        ) -> T {
+            if exp == 0_u8.into() {
+                1_u8.into()
+            } else if exp == 1_u8.into() {
+                base
+            } else if exp % 2_u8.into() == 0_u8.into() {
+                pow(base * base, exp / 2_u8.into())
+            } else {
+                base * pow(base * base, exp / 2_u8.into())
+            }
+        }
+        fn assign(ref self: ContractState,wallet_address : ContractAddress, score: u64){
+            self.ownable.assert_only_owner();
+            let value = pow(2.71,-score);
+            let x = value/(value + 10);
+            let _balance = self.balances.read(caller);
+            self.balances.write(_balance + x);
+            self.supply.write(self.supply  - x );
+            
         }
     }
 }
