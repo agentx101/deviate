@@ -2,7 +2,7 @@
 // Compatible with OpenZeppelin Contracts for Cairo ^0.13.0
 
 #[starknet::contract]
-mod DevDock {
+pub mod DevDock {
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::token::erc20::ERC20Component;
     use openzeppelin::token::erc20::ERC20HooksEmptyImpl;
@@ -42,12 +42,13 @@ mod DevDock {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress) {
+    fn constructor(ref self: ContractState) {
         self.erc20.initializer("STARK", "STRK");
         // self.ownable.initializer(owner);
-        self.ownable.initializer(get_caller_address())
+        self.ownable.initializer(get_caller_address());
         self.mint(get_contract_address(),1000000000000000000000);//1*10^21
-        self.supply = 1000000000000000000000;//1*10^21
+        // self.supply.write = 1000000000000000000000;//1*10^21
+        self.supply.write(1000000000000000000000);//1*10^21
     }
 
     #[generate_trait]
@@ -62,30 +63,33 @@ mod DevDock {
             let caller =get_caller_address();
             let _balance = self.balances.read(caller);
            
-            self.erc20._transfer_from(ref self,get_contract_address() , caller, amount);
+            self.erc20.transfer_from(get_contract_address() , caller, amount);
             self.balances.write(caller,_balance - amount);
         }
-        fn pow<T, +Sub<T>, +Mul<T>, +Div<T>, +Rem<T>, +PartialEq<T>, +Into<u8, T>, +Drop<T>, +Copy<T>>(
-            base: T, exp: T
-        ) -> T {
-            if exp == 0_u8.into() {
-                1_u8.into()
-            } else if exp == 1_u8.into() {
-                base
-            } else if exp % 2_u8.into() == 0_u8.into() {
-                pow(base * base, exp / 2_u8.into())
-            } else {
-                base * pow(base * base, exp / 2_u8.into())
-            }
-        }
-        fn assign(ref self: ContractState,wallet_address : ContractAddress, score: u64){
+    
+        
+        fn assign(ref self: ContractState,wallet_address : ContractAddress, score: u8){
             self.ownable.assert_only_owner();
-            let value = pow(2.71,-score);
+            let value = pow(2,score);
             let x = value/(value + 10);
-            let _balance = self.balances.read(caller);
-            self.balances.write(_balance + x);
-            self.supply.write(self.supply  - x );
+            let _balance = self.balances.read(wallet_address);
+            self.balances.write(wallet_address, _balance + x);
+            self.supply.write(self.supply.read()- x );
             
         }
+    }
+    fn pow(x: u256, n: u8) -> u256 {
+        let y = x;
+        if n == 0 {
+            return 1;
+        }
+        if n == 1 {
+            return x;
+        }
+        let double = pow(y * x, n / 2);
+        if (n % 2) == 1 {
+            return x * double;
+        }
+        return double;
     }
 }
