@@ -5,10 +5,18 @@ const deployScript = async (): Promise<void> => {
     {
       owner: deployer.address, // the deployer address is the owner of the contract
     },
-    "YourContract"
+    "DevDock"
   );
 };
-
+// const deployScript = async (): Promise<void> => {
+//     await deployContract(
+//       {
+//         // owner: deployer.address, // the deployer address is the owner of the contract
+//       },
+//       "DevDock"
+//     );
+//   };
+  
 deployScript()
   .then(() => {
     exportDeployments();

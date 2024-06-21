@@ -42,10 +42,10 @@ pub mod DevDock {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState) {
+    fn constructor(ref self: ContractState,owner: ContractAddress ) {
         self.erc20.initializer("STARK", "STRK");
-        // self.ownable.initializer(owner);
-        self.ownable.initializer(get_caller_address());
+        self.ownable.initializer(owner);
+        // self.ownable.initializer(get_caller_address()); //I commented out this line because here get_caller_address() is the contract_address itself because contract is calling it's constructor, not the deployer caller_address,so we need to explicityly say who is owner
         self.mint(get_contract_address(),1000000000000000000000);//1*10^21
         // self.supply.write = 1000000000000000000000;//1*10^21
         self.supply.write(1000000000000000000000);//1*10^21
@@ -67,7 +67,7 @@ pub mod DevDock {
             self.balances.write(caller,_balance - amount);
         }
     
-        
+        # [external(v0)]
         fn assign(ref self: ContractState,wallet_address : ContractAddress, score: u8){
             self.ownable.assert_only_owner();
             let value = pow(2,score);
@@ -76,6 +76,12 @@ pub mod DevDock {
             self.balances.write(wallet_address, _balance + x);
             self.supply.write(self.supply.read()- x );
             
+        }
+        # [external(v0)]
+        fn get_balance(self: @ContractState)-> u256 {
+            let caller = get_caller_address();
+            let balance = self.balances.read(caller);
+            return balance;
         }
     }
     fn pow(x: u256, n: u8) -> u256 {
