@@ -65,7 +65,7 @@ pub mod DevDock {
         fn receive(ref self: ContractState,amount:u256){
             let caller =get_caller_address();
             let _balance = self.trainer_balances.read(caller);
-           
+            
             self.erc20.transfer_from(get_contract_address() , caller, amount);
             self.trainer_balances.write(caller,_balance - amount);
         }
@@ -73,8 +73,7 @@ pub mod DevDock {
         fn receiveAll(ref self: ContractState){
             let caller =get_caller_address();
             let _balance = self.trainer_balances.read(caller);
-           
-            self.erc20.transfer_from(get_contract_address() , caller, _balance);
+            self.erc20._transfer(get_contract_address() , caller, _balance);
             self.trainer_balances.write(caller,0);
         }
     
@@ -86,6 +85,10 @@ pub mod DevDock {
             let x = 1000000000000000000 ;//10^18         
             let _balance = self.trainer_balances.read(wallet_address);
             self.trainer_balances.write(wallet_address, _balance + x);
+            // let _balance = self.trainer_balances.read(wallet_address);
+            
+            // self.erc20.approve(get_contract_address() , caller, _balance);
+            
             self.supply.write(self.supply.read()- x );
             
         }
