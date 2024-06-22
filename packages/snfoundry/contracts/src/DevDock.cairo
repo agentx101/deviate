@@ -66,7 +66,7 @@ pub mod DevDock {
             let caller =get_caller_address();
             let _balance = self.trainer_balances.read(caller);
             
-            self.erc20.transfer_from(get_contract_address() , caller, amount);
+            self.erc20._transfer(get_contract_address() , caller, amount);
             self.trainer_balances.write(caller,_balance - amount);
         }
         # [external(v0)]
