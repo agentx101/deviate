@@ -27,7 +27,7 @@ pub mod DevDock {
         erc20: ERC20Component::Storage,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
-        balances: LegacyMap<ContractAddress, u256>,
+        trainer_balances: LegacyMap<ContractAddress, u256>,
         supply: u256,
         value: u8
     }
@@ -64,10 +64,18 @@ pub mod DevDock {
         # [external(v0)]
         fn receive(ref self: ContractState,amount:u256){
             let caller =get_caller_address();
-            let _balance = self.balances.read(caller);
+            let _balance = self.trainer_balances.read(caller);
            
             self.erc20.transfer_from(get_contract_address() , caller, amount);
-            self.balances.write(caller,_balance - amount);
+            self.trainer_balances.write(caller,_balance - amount);
+        }
+        # [external(v0)]
+        fn receiveAll(ref self: ContractState){
+            let caller =get_caller_address();
+            let _balance = self.trainer_balances.read(caller);
+           
+            self.erc20.transfer_from(get_contract_address() , caller, _balance);
+            self.trainer_balances.write(caller,0);
         }
     
         # [external(v0)]
@@ -75,8 +83,8 @@ pub mod DevDock {
             self.ownable.assert_only_owner();
             let value = pow(2,score);
             let x = value/(value + 10);
-            let _balance = self.balances.read(wallet_address);
-            self.balances.write(wallet_address, _balance + x);
+            let _balance = self.trainer_balances.read(wallet_address);
+            self.trainer_balances.write(wallet_address, _balance + x);
             self.supply.write(self.supply.read()- x );
             
         }
@@ -89,7 +97,7 @@ pub mod DevDock {
         # [external(v0)]
         fn get_balance(self: @ContractState,caller:ContractAddress)-> u256 {
             // let caller = get_caller_address();
-            let balance = self.balances.read(caller);
+            let balance = self.trainer_balances.read(caller);
             return balance;
         }
        
