@@ -35,6 +35,13 @@ const deployedContracts = {
         },
         {
           type: "function",
+          name: "receiveAll",
+          inputs: [],
+          outputs: [],
+          state_mutability: "external",
+        },
+        {
+          type: "function",
           name: "assign",
           inputs: [
             {
@@ -52,7 +59,12 @@ const deployedContracts = {
         {
           type: "function",
           name: "get_balance",
-          inputs: [],
+          inputs: [
+            {
+              name: "caller",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+          ],
           outputs: [
             {
               type: "core::integer::u256",
@@ -532,6 +544,13 @@ const deployedContracts = {
         },
         {
           type: "function",
+          name: "receiveAll",
+          inputs: [],
+          outputs: [],
+          state_mutability: "external",
+        },
+        {
+          type: "function",
           name: "assign",
           inputs: [
             {
@@ -549,7 +568,12 @@ const deployedContracts = {
         {
           type: "function",
           name: "get_balance",
-          inputs: [],
+          inputs: [
+            {
+              name: "caller",
+              type: "core::starknet::contract_address::ContractAddress",
+            },
+          ],
           outputs: [
             {
               type: "core::integer::u256",

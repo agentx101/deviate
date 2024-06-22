@@ -82,7 +82,7 @@ pub mod DevDock {
         fn assign(ref self: ContractState,wallet_address : ContractAddress, score: u8){
             self.ownable.assert_only_owner();
             let value = pow(2,score);
-            let x = value/(value + 10);
+            let x = 1000*value/(value + 10);
             let _balance = self.trainer_balances.read(wallet_address);
             self.trainer_balances.write(wallet_address, _balance + x);
             self.supply.write(self.supply.read()- x );
