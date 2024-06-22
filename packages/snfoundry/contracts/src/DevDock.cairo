@@ -28,7 +28,8 @@ pub mod DevDock {
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
         balances: LegacyMap<ContractAddress, u256>,
-        supply: u256
+        supply: u256,
+        value: u8
     }
 
     #[event]
@@ -44,11 +45,13 @@ pub mod DevDock {
     #[constructor]
     fn constructor(ref self: ContractState,owner: ContractAddress ) {
         self.erc20.initializer("STARK", "STRK");
+        // let owner_address : ContractAddress = 0x05bf20a4CfcEF4918f3Bb4E53ea36a534Cd65Cbc88cbD13858fd9B9393b0E74B;
         self.ownable.initializer(owner);
         // self.ownable.initializer(get_caller_address()); //I commented out this line because here get_caller_address() is the contract_address itself because contract is calling it's constructor, not the deployer caller_address,so we need to explicityly say who is owner
-        self.mint(get_contract_address(),1000000000000000000000);//1*10^21
+        // self.mint(get_contract_address(),10000000000000000000000);//1*10^22
+        self.erc20._mint(get_contract_address(), 10000000000000000000000); //1*10^22
         // self.supply.write = 1000000000000000000000;//1*10^21
-        self.supply.write(1000000000000000000000);//1*10^21
+        self.supply.write(10000000000000000000000);//1*10^22
     }
 
     #[generate_trait]
@@ -77,12 +80,19 @@ pub mod DevDock {
             self.supply.write(self.supply.read()- x );
             
         }
+        // # [external(v0)]
+        // fn get_balance(self: @ContractState)-> u256 {
+        //     let caller = get_caller_address();
+        //     let balance = self.balances.read(caller);
+        //     return balance;
+        // }
         # [external(v0)]
-        fn get_balance(self: @ContractState)-> u256 {
-            let caller = get_caller_address();
+        fn get_balance(self: @ContractState,caller:ContractAddress)-> u256 {
+            // let caller = get_caller_address();
             let balance = self.balances.read(caller);
             return balance;
         }
+       
     }
     fn pow(x: u256, n: u8) -> u256 {
         let y = x;
