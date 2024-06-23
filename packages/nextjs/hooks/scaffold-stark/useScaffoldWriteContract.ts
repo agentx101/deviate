@@ -19,6 +19,8 @@ type UpdatedArgs = Parameters<
   ReturnType<typeof useContractWrite>["writeAsync"]
 >[0];
 
+
+
 export const useScaffoldWriteContract = <
   TContractName extends ContractName,
   TFunctionName extends ExtractAbiFunctionNamesScaffold<

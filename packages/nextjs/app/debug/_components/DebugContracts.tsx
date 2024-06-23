@@ -6,9 +6,11 @@ import { ContractUI } from "~~/app/debug/_components/contract";
 import { ContractName } from "~~/utils/scaffold-stark/contract";
 import { getAllContracts } from "~~/utils/scaffold-stark/contractsData";
 
+
 const selectedContractStorageKey = "scaffoldStark2.selectedContract";
 const contractsData = getAllContracts();
 const contractNames = Object.keys(contractsData) as ContractName[];
+
 
 export function DebugContracts() {
   const [selectedContract, setSelectedContract] = useLocalStorage<ContractName>(

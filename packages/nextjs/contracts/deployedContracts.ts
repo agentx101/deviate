@@ -515,6 +515,8 @@ const deployedContracts = {
   },
   sepolia: {
     DevDock: {
+      address:
+        "0x03b9d200f3e7569d122aa3114639b36e537df9fa6c275e68f0f7e6757c37d73f",
       abi: [
         {
           type: "struct",
