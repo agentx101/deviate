@@ -27,7 +27,6 @@ const Home: NextPage = () => {
   const { writeAsync: receiveAll } = useScaffoldMultiWriteContract({
     calls: [{contractName: "DevDock",
     functionName: "receiveAll",
-    args: [connectedAddress as AddressType],
   }]
   });
 
